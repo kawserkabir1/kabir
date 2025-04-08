@@ -1,0 +1,659 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>গাজা'য় হতাহতের পরিসংখ্যান</title>
+    <meta name="description" content="ফিলিস্তিনে গাজা সংঘাতের সর্বশেষ হতাহতের পরিসংখ্যান দেখুন। লাইভ ডেটা, শিশু, নারী, স্বাস্থ্যকর্মীর সংখ্যা এবং শতকরা হার সহ চার্ট। Tech for Palestine ডেটা উৎস।">
+    <meta name="keywords" content="Palestine, Gaza, casualties, statistics, deaths, children, women, medics, chart, live data, ফিলিস্তিন, গাজা, হতাহত, পরিসংখ্যান, নিহত, শিশু, নারী, চার্ট, লাইভ ডেটা">
+    <meta property="og:title" content="ফিলিস্তিনে হতাহতের পরিসংখ্যান (লাইভ)">
+    <meta property="og:description" content="গাজার সর্বশেষ হতাহতের পরিসংখ্যান, চার্ট সহ। Tech for Palestine ডেটা উৎস।">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://kabir.pages.dev/palestine"> <meta property="og:image" content="https://YOUR_DOMAIN/images/preview-index.jpg"> <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="ফিলিস্তিনে হতাহতের পরিসংখ্যান">
+    <meta name="twitter:description" content="গাজার সর্বশেষ হতাহতের পরিসংখ্যান, চার্ট সহ। Tech for Palestine ডেটা উৎস।">
+    <meta name="twitter:image" content="https://kabir.pages.dev/palestine/images/index.jpg">
+    <link rel="shortcut icon" href="./images/favicon.png" type="image/x-icon">
+
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://site-assets.fontawesome.com/releases/v6.7.2/css/all.css">
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+
+    <style>
+        body {
+        font-family: 'Hind Siliguri', sans-serif; 
+        line-height: 1.7; 
+        background-color: #f8fafc; /* bg-slate-50 */ 
+        font-weight: 350 !important;
+        }
+        
+        h1, h2, h3, h4, h5, h6 { font-family: 'Hind Siliguri', sans-serif; }
+        .data-placeholder { color: #9ca3af; /* gray-400 */ font-size: 2.25rem; /* text-4xl */ line-height: 2.5rem; font-weight: 600; }
+        /* Hamburger Menu Animation */
+        .hamburger div { height: 3px; background-color: white; margin: 5px 0; transition: all 0.3s ease; border-radius: 3px; }
+        .hamburger.active div:nth-child(1) { transform: rotate(-45deg) translate(-6px, 6px); }
+        .hamburger.active div:nth-child(2) { opacity: 0; }
+        .hamburger.active div:nth-child(3) { transform: rotate(45deg) translate(-5px, -5px); }
+        #mobile-menu { transition: transform 0.3s ease-out; }
+        /* Carousel Styles */
+        .carousel-inner {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+            touch-action: pan-y pinch-zoom;
+            transition: transform 0.3s ease-out;
+            user-select: none;
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+        }
+
+        .carousel-inner::-webkit-scrollbar {
+            display: none;
+        }
+
+        /* Optional: Add active state for touch feedback */
+        .carousel-inner:active {
+            cursor: grabbing;
+            cursor: -webkit-grabbing;
+        }
+
+        .carousel-inner img {
+            width: 100%;
+            height: 400px; /* Fixed height for all images */
+            object-fit: cover; /* This will zoom/crop images to fill the container */
+            object-position: center; /* Center the image within the container */
+        }
+        @media (min-width: 768px) {
+            .carousel-inner img {
+                height: 500px; /* Taller images on larger screens */
+            }
+        }
+        /* Chart container */
+        #chart-container canvas { max-width: 100%; max-height: 100%; }
+         /* static/scroll.css */
+
+::-webkit-scrollbar {
+    width: 0;
+  }
+
+    </style>
+</head>
+<body class="bg-slate-50">
+
+    <header class="bg-gradient-to-r from-red-700 via-red-600 to-red-800 text-white shadow-md sticky top-0 z-50">
+        <nav class="container mx-auto px-4 py-3 flex justify-between items-center">
+            <div class="text-xl md:text-2xl font-bold"><a href="index.html">ফিলিস্তিন পরিসংখ্যান</a></div>
+            <div class="hidden md:flex space-x-6 items-center">
+                <a href="index.html" class="hover:text-red-200 transition duration-200">হোম</a>
+                <a href="#stats" class="hover:text-red-200 transition duration-200">পরিসংখ্যান</a>
+                <a href="./press/" class="hover:text-red-200 transition duration-200">নিহত সাংবাদিক</a>
+                <a href="./infrastructure/" class="hover:text-red-200 transition duration-200">
+                  ক্ষতিগ্রস্ত অবকাঠামো</a>
+                <a href="./contact/" class="hover:text-red-200 transition duration-200">যোগাযোগ</a>
+            </div>
+            <div class="md:hidden">
+                <button id="menu-btn" class="hamburger focus:outline-none" aria-label="মেনু খুলুন">
+                    <div class="w-6 h-0.5 bg-white"></div>
+                    <div class="w-6 h-0.5 bg-white"></div>
+                    <div class="w-6 h-0.5 bg-white"></div>
+                </button>
+            </div>
+        </nav>
+        <div id="mobile-menu" class="md:hidden bg-red-700 absolute top-full left-0 w-full transform -translate-x-full overflow-hidden shadow-lg">
+             <a href="index.html" class="block px-4 py-3 text-white hover:bg-red-600 transition duration-200">হোম</a>
+             <a href="#stats" class="block px-4 py-3 text-white hover:bg-red-600 transition duration-200" onclick="document.getElementById('menu-btn').click()">পরিসংখ্যান</a>
+             <a href="./press/" class="block px-4 py-3 text-white hover:bg-red-600 transition duration-200">নিহত সাংবাদিক</a>
+             <a href="./infrastructure/" class="block px-4 py-3 text-white hover:bg-red-600 transition duration-200">ক্ষতিগ্রস্ত অবকাঠামো</a>
+             <a href="./contact/" class="block px-4 py-3 text-white hover:bg-red-600 transition duration-200">যোগাযোগ</a>
+        </div>
+    </header>
+
+    <div class="container mx-auto px-4 my-6 md:my-10">
+        <!-- Notice Box for Desktop -->
+        <div class="hidden lg:flex flex-col lg:flex-row gap-6">
+            <!-- Carousel Section -->
+            <section id="image-carousel" class="relative w-full lg:w-2/3 shadow-lg rounded-lg overflow-hidden group" aria-label="চিত্র গ্যালারি">
+                <div id="carousel-inner" class="carousel-inner flex transition-transform duration-700 ease-in-out">
+                </div>
+                <button id="prev-btn" aria-label="পূর্ববর্তী চিত্র" class="absolute top-1/2 left-2 md:left-4 transform -translate-y-1/2 bg-black bg-opacity-30 text-white p-2 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-300 focus:outline-none z-10">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" /></svg>
+                </button>
+                <button id="next-btn" aria-label="পরবর্তী চিত্র" class="absolute top-1/2 right-2 md:right-4 transform -translate-y-1/2 bg-black bg-opacity-30 text-white p-2 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-300 focus:outline-none z-10">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" /></svg>
+                </button>
+                <div id="carousel-dots" class="absolute bottom-3 md:bottom-5 left-1/2 transform -translate-x-1/2 flex space-x-2 z-10">
+                </div>
+            </section>
+
+            <!-- Notice Box for Desktop -->
+            <div class="w-full lg:w-1/3 bg-white rounded-lg shadow-md border border-red-200 p-6">
+                <h2 class="text-xl font-bold text-red-700 mb-4">গুরুত্বপূর্ণ বিজ্ঞপ্তি</h2>
+                <div class="prose prose-red">
+                    <p class="text-gray-700 mb-3">৭ অক্টোবর ২০২৩ থেকে গাজায় ইসরায়েলি হামলা শুরু হয়েছে। এই পরিসংখ্যানে দেখানো তথ্যগুলো প্রতিদিন হালনাগাদ করা হয়।</p>
+                    <p class="text-gray-700">সকল তথ্য Tech for Palestine এর API থেকে সংগ্রহ করা হয়েছে। তথ্যের নির্ভুলতা নিশ্চিত করার চেষ্টা করা হলেও কোন ত্রুটি থাকলে জানাবেন।</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Mobile Layout -->
+        <div class="lg:hidden">
+            <!-- Carousel Section for Mobile -->
+            <section id="image-carousel-mobile" class="relative w-full shadow-lg rounded-lg overflow-hidden group mb-6" aria-label="চিত্র গ্যালারি">
+                <div id="carousel-inner-mobile" class="carousel-inner flex transition-transform duration-700 ease-in-out">
+                </div>
+                <button id="prev-btn-mobile" aria-label="পূর্ববর্তী চিত্র" class="absolute top-1/2 left-2 transform -translate-y-1/2 bg-black bg-opacity-30 text-white p-2 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-300 focus:outline-none z-10">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" /></svg>
+                </button>
+                <button id="next-btn-mobile" aria-label="পরবর্তী চিত্র" class="absolute top-1/2 right-2 transform -translate-y-1/2 bg-black bg-opacity-30 text-white p-2 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-300 focus:outline-none z-10">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" /></svg>
+                </button>
+                <div id="carousel-dots-mobile" class="absolute bottom-3 left-1/2 transform -translate-x-1/2 flex space-x-2 z-10">
+                </div>
+            </section>
+        </div>
+    </div>
+
+    <div class="container mx-auto p-4 md:p-6">
+         <header id="stats" class="text-center mb-6 md:mb-10 pt-4 scroll-mt-20">
+            <h1 class="text-3xl md:text-4xl font-bold text-red-700">গাজা'য় হতাহতের সর্বশেষ পরিসংখ্যান</h1>
+            <p class="text-sm text-gray-600 mt-2">সর্বশেষ দিনের ক্রমসঞ্চিত ডেটা এবং নিহতদের শতকরা হার নিচে দেখানো হচ্ছে।</p>
+             <div id="loading-status" class="mt-4 text-blue-600">ডেটা লোড হচ্ছে...</div>
+             <div id="error-message" class="mt-4 text-red-600 bg-red-100 p-3 rounded hidden"></div>
+        </header>
+
+        <main>
+            <div class="grid grid-cols-1 lg:grid-cols-5 gap-6 md:gap-8 items-start">
+
+                <div class="lg:col-span-3 grid grid-cols-1 sm:grid-cols-2 gap-5 md:gap-6">
+                    
+                    <div class="bg-white p-5 md:p-6 rounded-lg shadow-md border border-gray-200 text-center hover:shadow-xl hover:scale-[1.03] transition-all duration-300 ease-out">
+                        <h2 class="text-lg md:text-xl font-semibold text-gray-800 mb-3">মোট নিহত (ক্রমসঞ্চিত)</h2>
+                        <p id="total-deaths" class="text-4xl md:text-5xl font-bold text-red-600 data-placeholder">-</p>
+                    </div>
+                    
+                    <div class="bg-white p-5 md:p-6 rounded-lg shadow-md border border-gray-200 text-center hover:shadow-xl hover:scale-[1.03] transition-all duration-300 ease-out">
+                        <h2 class="text-lg md:text-xl font-semibold text-gray-800 mb-3">শিশু (নিহত, ক্রমসঞ্চিত)</h2>
+                        <p id="children-deaths" class="text-4xl md:text-5xl font-bold text-blue-600 data-placeholder">-</p>
+                    </div>
+                    
+                    <div class="bg-white p-5 md:p-6 rounded-lg shadow-md border border-gray-200 text-center hover:shadow-xl hover:scale-[1.03] transition-all duration-300 ease-out">
+                        <h2 class="text-lg md:text-xl font-semibold text-gray-800 mb-3">নারী (নিহত, ক্রমসঞ্চিত)</h2>
+                        <p id="women-deaths" class="text-4xl md:text-5xl font-bold text-pink-600 data-placeholder">-</p>
+                    </div>
+                     
+                    <div class="bg-white p-5 md:p-6 rounded-lg shadow-md border border-gray-200 text-center hover:shadow-xl hover:scale-[1.03] transition-all duration-300 ease-out">
+                        <h2 class="text-lg md:text-xl font-semibold text-gray-800 mb-3">চিকিৎসক/স্বাস্থ্যকর্মী (নিহত)</h2>
+                        <p id="doctor-deaths" class="text-4xl md:text-5xl font-bold text-purple-600 data-placeholder">-</p>
+                    </div>
+                    <div class="bg-white p-2.5 md:p-3 rounded-lg shadow-md border border-gray-200 hover:shadow-xl hover:scale-[1.03] transition-all duration-300 ease-out">
+                        <a href="./press/" target="_blank" rel="noopener noreferrer" class="flex items-center justify-between font-bold text-2xl"> নিহত সাংবাদিক <i class="fa-light fa-arrow-up-right-from-square"></i></a>
+                    </div>
+                    <div class="bg-white p-2.5 md:p-3 rounded-lg shadow-md border border-gray-200 hover:shadow-xl hover:scale-[1.03] transition-all duration-300 ease-out">
+                        <a href="./infrastructure/" target="_blank" rel="noopener noreferrer" class="flex items-center justify-between text-2xl font-bold"> ক্ষতিগ্রস্ত অবকাঠামো <i class="fa-light fa-arrow-up-right-from-square"></i></a>
+                    </div>
+                    
+                    
+                    <div id="aged-box" class="hidden"></div>
+                    <div id="soldier-box" class="hidden"></div>
+                </div>
+
+                <div id="chart-wrapper" class="lg:col-span-2 bg-white p-4 rounded-lg shadow-md border border-gray-200 flex flex-col items-center">
+                     <h3 class="text-xl font-semibold text-center text-gray-800 mb-4 w-full">নিহতদের শতকরা হার</h3>
+                     <div id="chart-container" class="relative w-full max-w-sm h-64 md:h-80"> 
+                        <canvas id="casualtyChart"></canvas>
+                     </div>
+                    <div id="chart-error" class="text-center text-red-500 mt-4 hidden">চার্ট লোড করা যায়নি।</div>
+                </div>
+
+            </div> </main>
+
+        <!-- Notice Box for Mobile -->
+         <br>
+        <div class="container mx-auto px-4 lg:hidden mb-8">
+            <div class="bg-white rounded-lg shadow-md border border-red-200 p-6">
+                <h2 class="text-xl font-bold text-red-700 mb-4">গুরুত্বপূর্ণ বিজ্ঞপ্তি</h2>
+                <div class="prose prose-red">
+                    <p class="text-gray-700 mb-3">৭ অক্টোবর ২০২৩ থেকে গাজায় ইসরায়েলি হামলা শুরু হয়েছে। এই পরিসংখ্যানে দেখানো তথ্যগুলো প্রতিদিন হালনাগাদ করা হয়।</p>
+                    <p class="text-gray-700">সকল তথ্য Tech for Palestine এর API থেকে সংগ্রহ করা হয়েছে। তথ্যের নির্ভুলতা নিশ্চিত করার চেষ্টা করা হলেও কোন ত্রুটি থাকলে জানাবেন।</p>
+                </div>
+            </div>
+        </div>
+
+        <footer id="source-info" class="text-center mt-10 md:mt-16 py-6 border-t border-gray-300 scroll-mt-20"> 
+            <p class="text-gray-600">রিপোর্টের তারিখ: <span id="last-updated" class="font-medium">লোড হচ্ছে...</span></p>
+            <p class="text-gray-600">ডেটা উৎস: <span id="data-source" class="font-medium">Tech for Palestine</span></p>
+            <p class="text-gray-500 text-sm mt-2">&copy; ২০২৫ | তথ্যসূত্র: <a href="https://techforpalestine.org" target="_blank">Tech for Palestine</a><br />ডেভেলপার: <a class="text-red-600" href="https://kabir.pages.dev">কবির</a></p>
+        </footer>
+    </div> <script>
+        // --- UI Elements ---
+        const menuBtn = document.getElementById('menu-btn');
+        const mobileMenu = document.getElementById('mobile-menu');
+
+        // Desktop carousel elements
+        const carousel = document.getElementById('image-carousel');
+        const carouselInner = document.getElementById('carousel-inner');
+        const carouselDots = document.getElementById('carousel-dots');
+        const prevBtn = document.getElementById('prev-btn');
+        const nextBtn = document.getElementById('next-btn');
+
+        // Mobile carousel elements
+        const carouselMobile = document.getElementById('image-carousel-mobile');
+        const carouselInnerMobile = document.getElementById('carousel-inner-mobile');
+        const carouselDotsMobile = document.getElementById('carousel-dots-mobile');
+        const prevBtnMobile = document.getElementById('prev-btn-mobile');
+        const nextBtnMobile = document.getElementById('next-btn-mobile');
+
+        // Data elements
+        const loadingStatusEl = document.getElementById('loading-status');
+        const errorMessageEl = document.getElementById('error-message');
+        const totalDeathsEl = document.getElementById('total-deaths');
+        const childrenDeathsEl = document.getElementById('children-deaths');
+        const womenDeathsEl = document.getElementById('women-deaths');
+        const doctorDeathsEl = document.getElementById('doctor-deaths');
+        const lastUpdatedEl = document.getElementById('last-updated');
+        const dataSourceEl = document.getElementById('data-source');
+        // Chart elements
+        const chartContainer = document.getElementById('chart-container');
+        const chartCanvas = document.getElementById('casualtyChart');
+        const chartErrorEl = document.getElementById('chart-error');
+        let casualtyChartInstance = null; // To hold the chart instance
+
+        // --- Helper: Safely get element by ID ---
+        function safeGetElementById(id) {
+            const element = document.getElementById(id);
+            if (!element) {
+                console.warn(`Element with ID "${id}" not found.`);
+            }
+            return element;
+        }
+
+        // --- Mobile Menu Toggle ---
+        if (menuBtn && mobileMenu) {
+            menuBtn.addEventListener('click', () => {
+                menuBtn.classList.toggle('active');
+                mobileMenu.classList.toggle('-translate-x-full');
+            });
+            // Add click listener to mobile menu links to close menu
+             mobileMenu.querySelectorAll('a').forEach(link => {
+                 link.addEventListener('click', () => {
+                     if (!mobileMenu.classList.contains('-translate-x-full')) {
+                          menuBtn.click(); // Simulate click on menu button to close
+                      }
+                 });
+             });
+        } else {
+             console.warn("Mobile menu elements not found.");
+         }
+
+        // --- Carousel Logic ---
+        const carouselImages = [ // Ensure you have valid image URLs
+            
+            'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcS0rpfdTKJle6YeCaT8-LEKn615xtqTYPneCA&usqp=CAU',
+            'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTT-rq1bxaaqJiuCh65SngmmRNsYH4xtFLHVF9MNgOpQFEnaIvvaCbg2F8&s=10',
+            'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQYOAj-Qb07hj69l6zNvRB0AX601LEov1d6Hx_uDXHQxYRgMGHsyKe4y3yI&s=10',
+            'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQjl8X1FuGMT0_AlMVHOYFMQ2zMLKyjIu-wQw&usqp=CAU',
+            'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRu1JQqlUq0Gj-Db1KTIM06VDRN37xvhxDKUAsfzD-E-AYk-pxKyvGBRFDD&s=10',
+
+        ];
+        let currentSlide = 0;
+        let autoSlideInterval = null;
+        const slideDuration = 5000; // ms
+
+        // Update the createCarouselSlides function
+        function createCarouselSlides() {
+            // Create slides for desktop
+            createSlidesForCarousel(carouselInner, carouselDots);
+            // Create slides for mobile
+            createSlidesForCarousel(carouselInnerMobile, carouselDotsMobile);
+        }
+
+        function createSlidesForCarousel(inner, dotsContainer) {
+            if(!inner || !dotsContainer) { 
+                console.error("Carousel inner or dots container not found."); 
+                return; 
+            }
+
+            inner.innerHTML = ''; 
+            dotsContainer.innerHTML = '';
+            if (carouselImages.length === 0) return;
+
+            carouselImages.forEach((src, index) => {
+                const slide = document.createElement('div');
+                slide.className = 'flex-shrink-0 w-full relative';
+                // Added loading="eager" for first image, lazy for others
+                slide.innerHTML = `<img 
+                    loading="${index === 0 ? 'eager' : 'lazy'}" 
+                    src="${src || ''}" 
+                    alt="চিত্র ${index + 1}"
+                    class="w-full">`;
+                inner.appendChild(slide);
+
+                const dot = document.createElement('button');
+                dot.className = `w-3 h-3 rounded-full transition-colors duration-300 ${index === 0 ? 'bg-white' : 'bg-gray-400 hover:bg-gray-200'}`;
+                dot.setAttribute('aria-label', `চিত্রে যান ${index + 1}`);
+                dot.addEventListener('click', () => { 
+                    goToSlide(index, inner); 
+                    resetAutoSlide(); 
+                });
+                dotsContainer.appendChild(dot);
+            });
+            goToSlide(0, inner);
+        }
+
+        function updateDots(index) {
+             const dotsContainer = safeGetElementById('carousel-dots');
+             if(!dotsContainer) return;
+             const dots = dotsContainer.querySelectorAll('button');
+             dots.forEach((dot, i) => { dot.className = `w-3 h-3 rounded-full transition-colors duration-300 ${i === index ? 'bg-white' : 'bg-gray-400 hover:bg-gray-200'}`; });
+        }
+
+        // Update goToSlide function to handle specific carousel
+        function goToSlide(index, carouselInnerElement) {
+            if(!carouselInnerElement || carouselImages.length === 0) return;
+
+            const N = carouselImages.length;
+            // Ensure index is within bounds using modulo
+             currentSlide = (index % N + N) % N; // Handles negative index too
+
+             carouselInnerElement.style.transform = `translateX(${-currentSlide * 100}%)`;
+             updateDots(currentSlide);
+        }
+
+        function nextSlide() { goToSlide(currentSlide + 1, carouselInner); }
+        function prevSlide() { goToSlide(currentSlide - 1, carouselInner); }
+        function startAutoSlide() { stopAutoSlide(); if(carouselImages.length > 1) autoSlideInterval = setInterval(nextSlide, slideDuration); }
+        function stopAutoSlide() { clearInterval(autoSlideInterval); autoSlideInterval = null; } // Clear interval ID
+        function resetAutoSlide() { stopAutoSlide(); startAutoSlide(); }
+
+        // Add listeners only if elements exist
+        const prevButtonEl = safeGetElementById('prev-btn');
+        const nextButtonEl = safeGetElementById('next-btn');
+        const carouselContainerEl = safeGetElementById('image-carousel');
+
+        if(prevButtonEl && nextButtonEl && carouselContainerEl) {
+            prevButtonEl.addEventListener('click', () => { prevSlide(); resetAutoSlide(); });
+            nextButtonEl.addEventListener('click', () => { nextSlide(); resetAutoSlide(); });
+            carouselContainerEl.addEventListener('mouseenter', stopAutoSlide);
+            carouselContainerEl.addEventListener('mouseleave', startAutoSlide);
+        } else {
+             console.warn("Carousel buttons or container not found.");
+         }
+
+        // Mobile carousel controls
+        if(prevBtnMobile && nextBtnMobile && carouselMobile) {
+            prevBtnMobile.addEventListener('click', () => { 
+                goToSlide(currentSlide - 1, carouselInnerMobile); 
+                resetAutoSlide(); 
+            });
+            nextBtnMobile.addEventListener('click', () => { 
+                goToSlide(currentSlide + 1, carouselInnerMobile); 
+                resetAutoSlide(); 
+            });
+            carouselMobile.addEventListener('mouseenter', stopAutoSlide);
+            carouselMobile.addEventListener('mouseleave', startAutoSlide);
+        }
+
+        // --- Touch Swipe Logic ---
+        function handleTouchEvents(carouselElement, carouselInnerElement) {
+            let touchStartX = 0;
+            let touchEndX = 0;
+            const swipeThreshold = 50; // minimum distance for swipe
+
+            carouselElement.addEventListener('touchstart', (e) => {
+                touchStartX = e.touches[0].clientX;
+                stopAutoSlide(); // Stop auto-sliding during touch
+            }, { passive: true });
+
+            carouselElement.addEventListener('touchmove', (e) => {
+                touchEndX = e.touches[0].clientX;
+                // Optional: Add visual feedback during swipe
+                const swipeDistance = touchEndX - touchStartX;
+                carouselInnerElement.style.transform = `translateX(${-currentSlide * 100 + (swipeDistance / carouselElement.offsetWidth) * 100}%)`;
+            }, { passive: true });
+
+            carouselElement.addEventListener('touchend', () => {
+                const swipeDistance = touchEndX - touchStartX;
+                
+                if (Math.abs(swipeDistance) > swipeThreshold) {
+                    if (swipeDistance > 0) {
+                        // Swiped right - go to previous slide
+                        goToSlide(currentSlide - 1, carouselInnerElement);
+                    } else {
+                        // Swiped left - go to next slide
+                        goToSlide(currentSlide + 1, carouselInnerElement);
+                    }
+                } else {
+                    // If swipe wasn't long enough, return to current slide
+                    goToSlide(currentSlide, carouselInnerElement);
+                }
+                
+                resetAutoSlide(); // Resume auto-sliding
+            }, { passive: true });
+        }
+
+        // --- Chart Creation ---
+        function createCasualtyChart(data) {
+            const canvas = safeGetElementById('casualtyChart');
+            const errorEl = safeGetElementById('chart-error');
+            if (!canvas) { console.error("Chart canvas not found"); return; }
+
+            const ctx = canvas.getContext('2d');
+            if(!ctx) { console.error("Failed to get canvas context"); return; }
+            if(errorEl) errorEl.classList.add('hidden'); // Hide error initially
+
+             // Destroy previous chart instance if exists
+             if (casualtyChartInstance) {
+                 casualtyChartInstance.destroy();
+                 casualtyChartInstance = null; // Reset instance variable
+             }
+
+             // Validate data structure and values
+             if (!data || !Array.isArray(data.labels) || !Array.isArray(data.values) || data.labels.length !== data.values.length || data.values.some(v => typeof v !== 'number' || isNaN(v) || v < 0)) {
+                  console.error("Invalid data provided for chart:", data);
+                  if(errorEl) { errorEl.classList.remove('hidden'); errorEl.textContent = 'চার্টের জন্য সঠিক ডেটা পাওয়া যায়নি।'; }
+                  return;
+              }
+               // Avoid creating chart if all values are zero or cannot be calculated
+               const sumValues = data.values.reduce((a, b) => a + b, 0);
+                if (sumValues <= 0) {
+                   console.warn("Chart data values sum to zero or less, skipping chart creation.");
+                   if (errorEl) { errorEl.classList.remove('hidden'); errorEl.textContent = 'শতকরা হার দেখানোর জন্য ডেটা উপলব্ধ নেই।'; }
+                   return;
+               }
+
+            try {
+                casualtyChartInstance = new Chart(ctx, {
+                    type: 'doughnut',
+                    data: {
+                        labels: data.labels,
+                        datasets: [{
+                            label: 'নিহতদের হার (%)',
+                            data: data.values,
+                            backgroundColor: [ 'rgba(59, 130, 246, 0.7)', 'rgba(236, 72, 153, 0.7)', 'rgba(168, 85, 247, 0.7)', 'rgba(107, 114, 128, 0.7)' ],
+                            borderColor: [ 'rgba(59, 130, 246, 1)', 'rgba(236, 72, 153, 1)', 'rgba(168, 85, 247, 1)', 'rgba(107, 114, 128, 1)' ],
+                            borderWidth: 1,
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false, // Respect container dimensions
+                        plugins: {
+                            legend: { position: 'bottom', labels: { font: { family: "'Hind Siliguri', sans-serif" } } },
+                            tooltip: {
+                                callbacks: {
+                                    label: function(context) {
+                                        let label = context.label || ''; if (label) { label += ': '; }
+                                        if (context.parsed !== null && typeof context.parsed === 'number') {
+                                             label += context.parsed.toLocaleString('bn-BD', { style: 'percent', minimumFractionDigits: 1 }); }
+                                         else { label += 'N/A'; }
+                                         return label;
+                                     }
+                                },
+                                bodyFont: { family: "'Hind Siliguri', sans-serif" }, titleFont: { family: "'Hind Siliguri', sans-serif" }
+                            }
+                        },
+                         cutout: '60%'
+                    }
+                });
+            } catch (error) {
+                 console.error("Error creating chart:", error);
+                 if(errorEl) { errorEl.classList.remove('hidden'); errorEl.textContent = 'চার্ট তৈরি করতে সমস্যা হয়েছে।'; }
+             }
+        }
+
+        // --- Casualty Data Fetching & Processing ---
+        const API_URL = 'https://data.techforpalestine.org/api/v2/casualties_daily.min.json';
+
+        // Helper to safely get element and set text, handling nulls
+        function safeSetText(elementId, text) {
+            const element = safeGetElementById(elementId);
+            if (element) {
+                element.textContent = text !== null && typeof text !== 'undefined' ? String(text) : '-';
+            }
+        }
+
+        const formatNumber = (value) => {
+             const cleanValue = typeof value === 'string' ? value.replace(/,/g, '') : value;
+             const num = Number(cleanValue);
+             if (!isNaN(num) && typeof cleanValue !== 'undefined' && cleanValue !== null && cleanValue !== '') { return num.toLocaleString('bn-BD'); }
+             else if (cleanValue === 0 || cleanValue === "0") { return (0).toLocaleString('bn-BD'); }
+             return '-';
+         };
+        const formatDate = (dateString) => {
+             try {
+                  if (!dateString || !/^\d{4}-\d{2}-\d{2}/.test(dateString)) { return dateString || 'N/A'; }
+                 const date = new Date(dateString.substring(0, 10) + 'T00:00:00Z');
+                 if (isNaN(date.getTime())) { return dateString || 'N/A'; }
+                 return date.toLocaleDateString('bn-BD', { year: 'numeric', month: 'long', day: 'numeric', timeZone: 'UTC' });
+             } catch (e) { return dateString || 'N/A'; }
+         };
+
+        async function fetchDataAndUpdateUI() {
+            const loadingEl = safeGetElementById('loading-status');
+            const errorMsgEl = safeGetElementById('error-message');
+            const chartErrEl = safeGetElementById('chart-error'); // Get chart error element
+
+            if(loadingEl) loadingEl.textContent = 'সর্বশেষ ডেটা লোড হচ্ছে...';
+            if(loadingEl) loadingEl.classList.remove('hidden');
+            if(errorMsgEl) errorMsgEl.classList.add('hidden');
+            if(chartErrEl) chartErrEl.classList.add('hidden'); // Hide chart error too
+
+            // Reset placeholders using safeSetText
+            safeSetText('total-deaths', '-');
+            safeSetText('children-deaths', '-');
+            safeSetText('women-deaths', '-');
+            safeSetText('doctor-deaths', '-');
+            safeSetText('last-updated', 'লোড হচ্ছে...');
+            // Destroy existing chart before fetching new data
+             if (casualtyChartInstance) {
+                 casualtyChartInstance.destroy();
+                 casualtyChartInstance = null;
+             }
+
+
+            try {
+                const response = await fetch(API_URL);
+                if (!response.ok) {
+                    throw new Error(`সার্ভার ত্রুটি (${response.status})`);
+                }
+
+                const apiDataArray = await response.json();
+                if (!Array.isArray(apiDataArray) || apiDataArray.length === 0) {
+                     throw new Error("API থেকে ডেটা পাওয়া যায়নি বা ফরম্যাট সঠিক নয়।");
+                 }
+
+                 const latestData = apiDataArray[apiDataArray.length - 1];
+                 if (!latestData) {
+                     throw new Error("সর্বশেষ দিনের ডেটা পাওয়া যায়নি।");
+                 }
+
+                 // --- Update Stat Boxes ---
+                  const safeNumber = (val) => Number(String(val || 0).replace(/,/g, ''));
+                  const total = safeNumber(latestData.ext_killed_cum);
+                  const children = safeNumber(latestData.ext_killed_children_cum);
+                  const women = safeNumber(latestData.ext_killed_women_cum);
+                  const medics = safeNumber(latestData.ext_med_killed_cum);
+
+                 safeSetText('total-deaths', formatNumber(total));
+                 safeSetText('children-deaths', formatNumber(children));
+                 safeSetText('women-deaths', formatNumber(women));
+                 safeSetText('doctor-deaths', formatNumber(medics));
+                 safeSetText('last-updated', formatDate(latestData.report_date));
+                 safeSetText('data-source', latestData.report_source ? `T4P (${latestData.report_source})` : 'Tech for Palestine');
+
+                 // --- Prepare and Create Chart ---
+                 if (total > 0) {
+                      const others = Math.max(0, total - children - women - medics);
+                      const chartData = {
+                          labels: ['শিশু', 'নারী', 'স্বাস্থ্যকর্মী', 'অন্যান্য'],
+                          values: [ (children / total), (women / total), (medics / total), (others / total) ]
+                      };
+                      // Validate calculated percentages
+                      if (chartData.values.every(v => typeof v === 'number' && !isNaN(v) && v >= 0)) {
+                          createCasualtyChart(chartData);
+                      } else {
+                          console.error("Chart percentage calculation resulted in invalid values:", chartData.values);
+                          if(chartErrEl) { chartErrEl.textContent = 'শতকরা হার গণনা করা যায়নি।'; chartErrEl.classList.remove('hidden'); }
+                      }
+                  } else {
+                      console.warn("Total deaths zero, skipping chart.");
+                       if (chartErrEl) { chartErrEl.textContent = 'শতকরা হার দেখানোর জন্য ডেটা নেই।'; chartErrEl.classList.remove('hidden'); }
+                   }
+
+                  if(loadingEl) {
+                      loadingEl.textContent = 'ডেটা সফলভাবে লোড হয়েছে।';
+                      setTimeout(() => { loadingEl.classList.add('hidden'); }, 1500);
+                  }
+
+            } catch (error) {
+                console.error("Data Fetch Error:", error);
+                if(errorMsgEl) { errorMsgEl.textContent = `ত্রুটি: ${error.message}. ডেটা লোড করা যায়নি।`; errorMsgEl.classList.remove('hidden'); }
+                if(loadingEl) loadingEl.classList.add('hidden');
+                // Reset fields to 'Error' state
+                safeSetText('total-deaths', 'ত্রুটি');
+                safeSetText('children-deaths', 'ত্রুটি');
+                safeSetText('women-deaths', 'ত্রুটি');
+                safeSetText('doctor-deaths', 'ত্রুটি');
+                safeSetText('last-updated', 'ব্যর্থ');
+                if(chartErrEl) { chartErrEl.textContent = 'ডেটা লোড ত্রুটির কারণে চার্ট দেখানো সম্ভব হচ্ছে না।'; chartErrEl.classList.remove('hidden'); }
+            }
+        }
+
+        // --- Initial Setup and Load ---
+        document.addEventListener('DOMContentLoaded', () => {
+            console.log("DOM fully loaded and parsed"); // Debug log
+
+            // Remove unavailable data boxes safely
+            const agedBox = safeGetElementById('aged-box'); if (agedBox) agedBox.remove();
+            const soldierBox = safeGetElementById('soldier-box'); if (soldierBox) soldierBox.remove();
+
+            // Initialize Carousel
+            createCarouselSlides();
+            startAutoSlide(); // Start carousel auto slide
+
+            // Initialize touch events for desktop carousel
+            if (carousel && carouselInner) {
+                handleTouchEvents(carousel, carouselInner);
+            }
+
+            // Initialize touch events for mobile carousel
+            if (carouselMobile && carouselInnerMobile) {
+                handleTouchEvents(carouselMobile, carouselInnerMobile);
+            }
+
+            // Fetch Casualty Data
+            fetchDataAndUpdateUI();
+
+            // Optional: Refresh data periodically
+            // setInterval(fetchDataAndUpdateUI, 30 * 60 * 1000); // e.g., every 30 minutes
+        });
+
+    </script>
+
+</body>
+</html>

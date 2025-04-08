@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ত্রুটি - পৃষ্ঠা পাওয়া যায়নি</title>
+
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <style>
+        body { font-family: 'Hind Siliguri', sans-serif; }
+        .error-code {
+            background: linear-gradient(to right, #b91c1c, #dc2626, #e11d48); /* from-red-700 via-red-600 to-rose-600 */
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+        }
+    </style>
+</head>
+<body class="bg-slate-100 flex items-center justify-center min-h-screen p-6">
+
+    <div class="bg-white p-8 md:p-12 rounded-lg shadow-xl text-center max-w-md w-full border border-gray-200">
+        <h1 class="text-8xl md:text-9xl font-extrabold error-code mb-4 pt-8">ত্রুটি</h1>
+
+        <h2 class="text-2xl md:text-3xl font-semibold text-gray-800 mb-3">ওহো! কিছু একটা সমস্যা হয়েছে।</h2>
+        <p class="text-gray-600 mb-8">
+            আপনি যে পৃষ্ঠাটি খুঁজছেন তা হয়তো সরানো হয়েছে, নাম পরিবর্তন করা হয়েছে অথবা সাময়িকভাবে অনুপলব্ধ। <br>
+            (The page you are looking for might have been removed, had its name changed, or is temporarily unavailable.)
+        </p>
+
+        <a href="/" class="inline-block px-6 py-3 bg-gradient-to-r from-red-600 to-red-700 text-white font-semibold rounded-lg shadow-md hover:from-red-700 hover:to-red-800 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 transition duration-150 ease-in-out">
+            হোম পেজে ফিরে যান
+        </a>
+    </div>
+
+    <script>
+        // Basic attempt to display error code from URL query parameter (if server redirects with it)
+        // Example: /error.html?code=404
+        // Note: This depends heavily on server configuration and might not always work.
+        // The ErrorDocument directive itself doesn't usually pass the code this way by default.
+        /*
+        try {
+            const params = new URLSearchParams(window.location.search);
+            const errorCode = params.get('code');
+            const errorCodeElement = document.querySelector('.error-code'); // Assuming you add this class to h1
+            if (errorCode && errorCodeElement) {
+                errorCodeElement.textContent = errorCode;
+            } else if (errorCodeElement) {
+                // Try getting status from performance navigation timing (might reflect redirect)
+                 const navigationEntry = performance.getEntriesByType("navigation")[0];
+                 if (navigationEntry && navigationEntry.type === 'navigate' && navigationEntry.responseStatus >= 400) {
+                      errorCodeElement.textContent = navigationEntry.responseStatus;
+                 } else {
+                      // Fallback if no specific code found
+                       // errorCodeElement.textContent = 'ত্রুটি';
+                  }
+             }
+        } catch (e) {
+            console.error("Error trying to display error code:", e);
+        }
+        */
+    </script>
+
+</body>
+</html>
