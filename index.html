@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Maintenance Mode</title>
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+  <script>
+    // Function to toggle between day and night themes
+    function toggleTheme() {
+      const body = document.body;
+      body.classList.toggle('bg-gray-900');
+      body.classList.toggle('text-white');
+      const themeIcon = document.getElementById('theme-icon');
+      themeIcon.classList.toggle('fa-sun');
+      themeIcon.classList.toggle('fa-moon');
+    }
+
+    // Function to change language
+    function changeLanguage(lang) {
+      const title = document.getElementById('title');
+      const description = document.getElementById('description');
+      if (lang === 'en') {
+        title.textContent = 'Maintenance Mode';
+        description.textContent = 'We are currently under maintenance. Please check back later.';
+      } else if (lang === 'bn') {
+        title.textContent = 'রক্ষণাবেক্ষণ মোড';
+        description.textContent = 'আমরা বর্তমানে রক্ষণাবেক্ষণে আছি। পরে আবার চেক করুন। নতুন কিছু আসতে চলছে! ';
+      }
+    }
+  </script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+</head>
+<body class="bg-gray-100 text-gray-900 flex items-center justify-center min-h-screen transition-colors duration-300">
+  <div class="text-center p-8">
+    <!-- Header with Language Selector and Theme Toggle -->
+    <div class="flex justify-between items-center mb-8">
+      <div>
+        <button onclick="changeLanguage('en')" class="bg-blue-500 text-white px-4 py-2 rounded-md mr-2 hover:bg-blue-600">English</button>
+        <button onclick="changeLanguage('bn')" class="bg-green-500 text-white px-4 py-2 rounded-md hover:bg-green-600">বাংলা</button>
+      </div>
+      <button onclick="toggleTheme()" class="bg-gray-800 text-white px-4 py-2 rounded-md hover:bg-gray-700">
+        <i id="theme-icon" class="fas fa-moon"></i>
+      </button>
+    </div>
+
+    <!-- Main Content -->
+    <div class="bg-white bg-opacity-90 p-8 rounded-lg shadow-lg max-w-2xl mx-auto">
+      <h1 id="title" class="text-4xl font-bold mb-4">Maintenance Mode</h1>
+      <p id="description" class="text-lg mb-6">We are currently under maintenance. Please check back later.</p>
+      <div class="animate-bounce">
+        <i class="fas fa-tools text-6xl text-blue-500"></i>
+      </div>
+    </div>
+  </div>
+</body>
+</html>
