@@ -1,0 +1,580 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KabirCast | Local Screen Sharing</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- PeerJS -->
+    <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
+    
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet">
+
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Outfit', 'sans-serif'],
+                    },
+                    colors: {
+                        nature: {
+                            50: '#ecfdf5',
+                            100: '#d1fae5',
+                            200: '#a7f3d0',
+                            300: '#6ee7b7',
+                            400: '#34d399',
+                            500: '#10b981', // Main Green
+                            600: '#059669',
+                            700: '#047857',
+                            800: '#065f46',
+                            900: '#064e3b',
+                        }
+                    },
+                    animation: {
+                        'blob': 'blob 7s infinite',
+                        'cursor': 'cursor .75s step-end infinite',
+                    },
+                    keyframes: {
+                        blob: {
+                            '0%': { transform: 'translate(0px, 0px) scale(1)' },
+                            '33%': { transform: 'translate(30px, -50px) scale(1.1)' },
+                            '66%': { transform: 'translate(-20px, 20px) scale(0.9)' },
+                            '100%': { transform: 'translate(0px, 0px) scale(1)' },
+                        },
+                        cursor: {
+                            '0%, 100%': { opacity: '1' },
+                            '50%': { opacity: '0' },
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        /* Custom Styles for Outline Text */
+        .text-outline {
+            -webkit-text-stroke: 2px rgba(16, 185, 129, 0.3); /* Green-500 with opacity */
+            color: transparent;
+            position: absolute;
+            top: -4px;
+            left: -4px;
+            z-index: -1;
+            width: 100%;
+            user-select: none;
+        }
+
+        .dark .text-outline {
+            -webkit-text-stroke: 2px rgba(52, 211, 153, 0.2); /* Green-400 */
+        }
+
+        /* Hide scrollbar for clean UI */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 4px;
+        }
+        .dark ::-webkit-scrollbar-thumb {
+            background: #334155;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #10b981;
+        }
+
+        /* Glassmorphism utilities */
+        .glass {
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+        }
+        .dark .glass {
+            background: rgba(15, 23, 42, 0.7);
+        }
+
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.1);
+        }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-900 dark:bg-slate-950 dark:text-slate-100 transition-colors duration-300 selection:bg-nature-500 selection:text-white">
+
+    <!-- Decorative Background Shapes -->
+    <div class="fixed inset-0 overflow-hidden pointer-events-none z-0">
+        <!-- Top Right Blob -->
+        <div class="absolute -top-20 -right-20 w-96 h-96 bg-nature-300 rounded-full mix-blend-multiply filter blur-3xl opacity-30 animate-blob dark:mix-blend-overlay dark:bg-nature-800"></div>
+        <!-- Bottom Left Blob -->
+        <div class="absolute -bottom-20 -left-20 w-96 h-96 bg-blue-300 rounded-full mix-blend-multiply filter blur-3xl opacity-30 animate-blob animation-delay-2000 dark:mix-blend-overlay dark:bg-blue-900"></div>
+        <!-- Center Blob -->
+        <div class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-purple-300 rounded-full mix-blend-multiply filter blur-3xl opacity-30 animate-blob animation-delay-4000 dark:mix-blend-overlay dark:bg-purple-900"></div>
+        
+        <!-- SVG Wave Bottom -->
+        <svg class="absolute bottom-0 left-0 w-full text-nature-50 dark:text-slate-900 transition-colors duration-300" viewBox="0 0 1440 320" preserveAspectRatio="none">
+            <path fill="currentColor" fill-opacity="1" d="M0,96L48,112C96,128,192,160,288,160C384,160,480,128,576,112C672,96,768,96,864,112C960,128,1056,160,1152,160C1248,160,1344,128,1392,112L1440,96L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z"></path>
+        </svg>
+    </div>
+
+    <!-- Navigation -->
+    <header id="navbar" class="fixed w-full z-50 transition-all duration-300 border-b border-transparent">
+        <div class="container mx-auto px-6 py-4">
+            <nav class="flex justify-between items-center">
+                <!-- Logo -->
+                <a href="#" class="flex items-center gap-2 group">
+                    <div class="bg-nature-500 text-white p-2 rounded-xl group-hover:rotate-12 transition-transform shadow-lg shadow-nature-500/30">
+                        <i data-lucide="cast" class="w-6 h-6"></i>
+                    </div>
+                    <span class="text-2xl font-bold tracking-tight">Kabir<span class="text-nature-600 dark:text-nature-400">Cast</span></span>
+                </a>
+
+                <!-- Desktop Menu -->
+                <div class="hidden md:flex items-center gap-8">
+                    <a href="#features" class="font-medium hover:text-nature-600 dark:hover:text-nature-400 transition-colors">Features</a>
+                    <a href="#how-to" class="font-medium hover:text-nature-600 dark:hover:text-nature-400 transition-colors">How it Works</a>
+                    <a href="#contact" class="font-medium hover:text-nature-600 dark:hover:text-nature-400 transition-colors">Contact</a>
+                    
+                    <!-- Theme Toggle -->
+                    <button id="theme-toggle" class="p-2 rounded-full hover:bg-slate-200 dark:hover:bg-slate-800 transition-colors" aria-label="Toggle Theme">
+                        <i data-lucide="moon" class="w-5 h-5 hidden dark:block"></i>
+                        <i data-lucide="sun" class="w-5 h-5 block dark:hidden"></i>
+                    </button>
+                    
+                    <a href="#app" class="bg-nature-600 hover:bg-nature-700 text-white px-6 py-2.5 rounded-full font-semibold shadow-lg shadow-nature-600/30 transition-all hover:scale-105 active:scale-95 flex items-center gap-2">
+                        Get Started <i data-lucide="arrow-right" class="w-4 h-4"></i>
+                    </a>
+                </div>
+
+                <!-- Mobile Menu Button -->
+                <button id="mobile-menu-btn" class="md:hidden p-2 text-slate-600 dark:text-slate-300">
+                    <i data-lucide="menu" class="w-7 h-7"></i>
+                </button>
+            </nav>
+        </div>
+
+        <!-- Mobile Menu -->
+        <div id="mobile-menu" class="hidden md:hidden absolute top-full left-0 w-full bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border-b border-slate-200 dark:border-slate-800 shadow-xl">
+            <div class="flex flex-col p-6 space-y-4">
+                <a href="#features" class="text-lg font-medium">Features</a>
+                <a href="#how-to" class="text-lg font-medium">How it Works</a>
+                <a href="#contact" class="text-lg font-medium">Contact</a>
+                <div class="h-px bg-slate-200 dark:bg-slate-700 my-2"></div>
+                <button id="mobile-theme-toggle" class="flex items-center gap-3 text-lg font-medium">
+                    <span class="dark:hidden">Dark Mode</span>
+                    <span class="hidden dark:block">Light Mode</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="relative z-10 pt-24 min-h-screen">
+        
+        <!-- Hero Section -->
+        <section class="container mx-auto px-6 py-12 lg:py-20 flex flex-col lg:flex-row items-center gap-16" id="app">
+            
+            <!-- Left Column: Content -->
+            <div class="lg:w-1/2 space-y-8 text-center lg:text-left">
+                <div class="relative inline-block">
+                    <h1 class="text-5xl lg:text-7xl font-extrabold tracking-tight relative z-10 leading-tight">
+                        Share your screen with <br>
+                        <span id="typing-text" class="text-nature-600 dark:text-nature-400"></span><span class="animate-cursor text-nature-600 dark:text-nature-400">|</span>
+                    </h1>
+                    <!-- Outline Text Effect (Behind) -->
+                    <h1 class="text-5xl lg:text-7xl font-extrabold tracking-tight text-outline pointer-events-none leading-tight" aria-hidden="true">
+                        Share your screen with <br>
+                        <span class="invisible">Placeholder</span>
+                    </h1>
+                </div>
+
+                <p class="text-lg text-slate-600 dark:text-slate-300 max-w-lg mx-auto lg:mx-0 leading-relaxed">
+                    Broadcast your screen instantly over your local network. No server setup required. Fast, secure, and peer-to-peer.
+                </p>
+
+                <!-- App Control Panel -->
+                <div class="glass-panel p-6 rounded-3xl space-y-6 max-w-md mx-auto lg:mx-0">
+                    
+                    <!-- ID Display (For Host) -->
+                    <div id="host-controls" class="hidden space-y-4">
+                        <div class="bg-nature-50/50 dark:bg-nature-900/30 p-4 rounded-xl border border-nature-200 dark:border-nature-800">
+                            <p class="text-sm text-slate-500 dark:text-slate-400 mb-1">Your ID (Share this):</p>
+                            <div class="flex items-center justify-between gap-2">
+                                <code id="my-id" class="text-xl font-bold text-nature-700 dark:text-nature-300 font-mono">Generating...</code>
+                                <button onclick="copyId()" class="p-2 hover:bg-nature-100 dark:hover:bg-nature-800 rounded-lg text-nature-600 transition-colors" title="Copy ID">
+                                    <i data-lucide="copy" class="w-5 h-5"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-2 text-sm text-green-600 dark:text-green-400 bg-green-100 dark:bg-green-900/30 p-3 rounded-lg animate-pulse">
+                            <i data-lucide="wifi" class="w-4 h-4"></i>
+                            <span>Broadcasting active...</span>
+                        </div>
+                    </div>
+
+                    <!-- Input (For Viewer) -->
+                    <div id="viewer-controls" class="space-y-4">
+                        <div class="relative">
+                            <i data-lucide="user" class="absolute left-3 top-3.5 text-slate-400 w-5 h-5"></i>
+                            <input type="text" id="remote-id" placeholder="Enter Host ID to Join" 
+                                class="w-full pl-10 pr-4 py-3 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 focus:ring-2 focus:ring-nature-500 focus:border-transparent outline-none transition-all">
+                        </div>
+                        <div class="grid grid-cols-2 gap-4">
+                            <button onclick="joinStream()" class="bg-slate-800 dark:bg-slate-700 hover:bg-slate-700 text-white py-3 px-6 rounded-xl font-semibold transition-all hover:-translate-y-1 shadow-lg flex justify-center items-center gap-2">
+                                <i data-lucide="eye" class="w-4 h-4"></i> Join
+                            </button>
+                            <button onclick="startHosting()" class="bg-nature-600 hover:bg-nature-700 text-white py-3 px-6 rounded-xl font-semibold transition-all hover:-translate-y-1 shadow-lg shadow-nature-600/30 flex justify-center items-center gap-2">
+                                <i data-lucide="monitor-up" class="w-4 h-4"></i> Host
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <p id="status-msg" class="text-center text-sm font-medium text-slate-500 min-h-[20px]"></p>
+                </div>
+            </div>
+
+            <!-- Right Column: Mockup -->
+            <div class="lg:w-1/2 w-full perspective-1000">
+                <div class="relative group transform transition-transform duration-700 hover:rotate-y-2 hover:rotate-x-2">
+                    <!-- Mac Window Frame -->
+                    <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-2xl overflow-hidden border border-slate-200 dark:border-slate-700 relative z-20">
+                        <!-- Window Header -->
+                        <div class="bg-slate-100 dark:bg-slate-900 px-4 py-3 border-b border-slate-200 dark:border-slate-700 flex items-center gap-2">
+                            <div class="w-3 h-3 rounded-full bg-red-500"></div>
+                            <div class="w-3 h-3 rounded-full bg-yellow-500"></div>
+                            <div class="w-3 h-3 rounded-full bg-green-500"></div>
+                            <div class="flex-1 text-center text-xs text-slate-400 font-mono">KabirCast Live View</div>
+                        </div>
+                        
+                        <!-- Video Container -->
+                        <div class="aspect-video bg-slate-900 relative flex items-center justify-center overflow-hidden">
+                            <!-- Placeholder State -->
+                            <div id="video-placeholder" class="text-center space-y-4">
+                                <div class="w-20 h-20 bg-slate-800 rounded-full flex items-center justify-center mx-auto animate-pulse">
+                                    <i data-lucide="monitor" class="w-10 h-10 text-slate-500"></i>
+                                </div>
+                                <p class="text-slate-400 text-sm">Waiting for stream...</p>
+                            </div>
+                            
+                            <!-- Actual Video -->
+                            <video id="remote-video" autoplay playsinline class="w-full h-full object-contain hidden bg-black"></video>
+                        </div>
+                    </div>
+                    
+                    <!-- Decorative Elements behind mockup -->
+                    <div class="absolute -inset-4 bg-gradient-to-r from-nature-400 to-blue-500 rounded-2xl blur-2xl opacity-30 group-hover:opacity-50 transition-opacity duration-500 -z-10"></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Features Section -->
+        <section id="features" class="py-20 bg-white/50 dark:bg-slate-900/50 backdrop-blur-sm">
+            <div class="container mx-auto px-6">
+                <div class="text-center mb-16">
+                    <span class="text-nature-600 font-semibold tracking-wider uppercase text-sm">Why Choose Us</span>
+                    <h2 class="text-3xl md:text-4xl font-bold mt-2">Built for Local Collaboration</h2>
+                </div>
+                
+                <div class="grid md:grid-cols-3 gap-8">
+                    <!-- Feature 1 -->
+                    <div class="bg-white dark:bg-slate-800 p-8 rounded-2xl shadow-lg border border-slate-100 dark:border-slate-700 hover:border-nature-500 transition-colors group">
+                        <div class="w-12 h-12 bg-nature-100 dark:bg-nature-900/50 rounded-lg flex items-center justify-center text-nature-600 mb-6 group-hover:scale-110 transition-transform">
+                            <i data-lucide="zap" class="w-6 h-6"></i>
+                        </div>
+                        <h3 class="text-xl font-bold mb-3">Lightning Fast</h3>
+                        <p class="text-slate-600 dark:text-slate-400">Uses your local Wi-Fi network for zero-latency streaming. No data leaves your room.</p>
+                    </div>
+                    
+                    <!-- Feature 2 -->
+                    <div class="bg-white dark:bg-slate-800 p-8 rounded-2xl shadow-lg border border-slate-100 dark:border-slate-700 hover:border-nature-500 transition-colors group">
+                        <div class="w-12 h-12 bg-nature-100 dark:bg-nature-900/50 rounded-lg flex items-center justify-center text-nature-600 mb-6 group-hover:scale-110 transition-transform">
+                            <i data-lucide="shield" class="w-6 h-6"></i>
+                        </div>
+                        <h3 class="text-xl font-bold mb-3">Secure P2P</h3>
+                        <p class="text-slate-600 dark:text-slate-400">Direct peer-to-peer connection. No central server stores your video stream.</p>
+                    </div>
+
+                    <!-- Feature 3 -->
+                    <div class="bg-white dark:bg-slate-800 p-8 rounded-2xl shadow-lg border border-slate-100 dark:border-slate-700 hover:border-nature-500 transition-colors group">
+                        <div class="w-12 h-12 bg-nature-100 dark:bg-nature-900/50 rounded-lg flex items-center justify-center text-nature-600 mb-6 group-hover:scale-110 transition-transform">
+                            <i data-lucide="layout" class="w-6 h-6"></i>
+                        </div>
+                        <h3 class="text-xl font-bold mb-3">Clean UI</h3>
+                        <p class="text-slate-600 dark:text-slate-400">Distraction-free interface designed with modern aesthetics and usability in mind.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Contact Section -->
+        <section id="contact" class="py-20">
+            <div class="container mx-auto px-6 max-w-4xl">
+                <div class="bg-nature-600 rounded-3xl p-8 md:p-12 text-center text-white relative overflow-hidden">
+                    <div class="relative z-10">
+                        <h2 class="text-3xl md:text-4xl font-bold mb-4">Ready to Collaborate?</h2>
+                        <p class="text-nature-100 mb-8 max-w-lg mx-auto">Have questions or suggestions? Send me a message directly.</p>
+                        
+                        <form action="https://formspree.io/f/your-form-id" method="POST" class="max-w-md mx-auto space-y-4 text-left">
+                            <input type="email" name="email" placeholder="Your email address" required 
+                                class="w-full px-4 py-3 rounded-lg bg-white/10 border border-white/20 text-white placeholder-nature-200 focus:outline-none focus:bg-white/20 backdrop-blur-sm">
+                            <textarea name="message" placeholder="Your message" rows="3" required
+                                class="w-full px-4 py-3 rounded-lg bg-white/10 border border-white/20 text-white placeholder-nature-200 focus:outline-none focus:bg-white/20 backdrop-blur-sm"></textarea>
+                            <button type="submit" class="w-full bg-white text-nature-600 font-bold py-3 rounded-lg hover:bg-nature-50 transition-colors">
+                                Send Message
+                            </button>
+                        </form>
+                    </div>
+                    
+                    <!-- Decorative Circles in banner -->
+                    <div class="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2"></div>
+                    <div class="absolute bottom-0 left-0 w-64 h-64 bg-black/10 rounded-full blur-3xl translate-y-1/2 -translate-x-1/2"></div>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-white dark:bg-slate-900 py-12 border-t border-slate-100 dark:border-slate-800">
+        <div class="container mx-auto px-6 text-center">
+            <div class="flex justify-center items-center gap-2 mb-4">
+                <i data-lucide="cast" class="w-5 h-5 text-nature-500"></i>
+                <span class="font-bold text-xl">KabirCast</span>
+            </div>
+            <p class="text-slate-500 dark:text-slate-400 mb-6">Designed & Developed by Kabir</p>
+            <div class="flex justify-center gap-6 text-slate-400">
+                <a href="#" class="hover:text-nature-500 transition-colors"><i data-lucide="github" class="w-5 h-5"></i></a>
+                <a href="#" class="hover:text-nature-500 transition-colors"><i data-lucide="twitter" class="w-5 h-5"></i></a>
+                <a href="#" class="hover:text-nature-500 transition-colors"><i data-lucide="linkedin" class="w-5 h-5"></i></a>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // --- UI Logic ---
+
+        // Initialize Lucide Icons
+        lucide.createIcons();
+
+        // Navbar Scroll Effect
+        const navbar = document.getElementById('navbar');
+        window.addEventListener('scroll', () => {
+            if (window.scrollY > 50) {
+                navbar.classList.add('glass', 'shadow-sm');
+                navbar.classList.remove('border-transparent');
+                navbar.classList.add('border-slate-200', 'dark:border-slate-800');
+            } else {
+                navbar.classList.remove('glass', 'shadow-sm', 'border-slate-200', 'dark:border-slate-800');
+                navbar.classList.add('border-transparent');
+            }
+        });
+
+        // Theme Toggle
+        const themeToggle = document.getElementById('theme-toggle');
+        const mobileThemeToggle = document.getElementById('mobile-theme-toggle');
+        const html = document.documentElement;
+
+        function toggleTheme() {
+            html.classList.toggle('dark');
+            localStorage.setItem('theme', html.classList.contains('dark') ? 'dark' : 'light');
+        }
+
+        themeToggle.addEventListener('click', toggleTheme);
+        mobileThemeToggle?.addEventListener('click', toggleTheme);
+
+        // Check LocalStorage for theme
+        if (localStorage.getItem('theme') === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+            html.classList.add('dark');
+        }
+
+        // Mobile Menu
+        const mobileMenuBtn = document.getElementById('mobile-menu-btn');
+        const mobileMenu = document.getElementById('mobile-menu');
+        mobileMenuBtn.addEventListener('click', () => {
+            mobileMenu.classList.toggle('hidden');
+        });
+
+        // Typing Effect
+        const textElement = document.getElementById('typing-text');
+        const words = ["Local Team", "Friends", "Colleagues", "Family"];
+        let wordIndex = 0;
+        let charIndex = 0;
+        let isDeleting = false;
+
+        function type() {
+            const currentWord = words[wordIndex];
+            
+            if (isDeleting) {
+                textElement.textContent = currentWord.substring(0, charIndex - 1);
+                charIndex--;
+            } else {
+                textElement.textContent = currentWord.substring(0, charIndex + 1);
+                charIndex++;
+            }
+
+            if (!isDeleting && charIndex === currentWord.length) {
+                isDeleting = true;
+                setTimeout(type, 2000);
+            } else if (isDeleting && charIndex === 0) {
+                isDeleting = false;
+                wordIndex = (wordIndex + 1) % words.length;
+                setTimeout(type, 500);
+            } else {
+                setTimeout(type, isDeleting ? 100 : 200);
+            }
+        }
+        type();
+
+        function copyId() {
+            const idText = document.getElementById('my-id').innerText;
+            navigator.clipboard.writeText(idText);
+            document.getElementById('status-msg').innerText = "ID Copied to clipboard!";
+            document.getElementById('status-msg').className = "text-center text-sm font-medium text-nature-600";
+            setTimeout(() => {
+                document.getElementById('status-msg').innerText = "";
+            }, 3000);
+        }
+
+        // --- Application Logic (PeerJS) ---
+        
+        let peer = null;
+        let localStream = null;
+        const statusMsg = document.getElementById('status-msg');
+        const videoElement = document.getElementById('remote-video');
+        const videoPlaceholder = document.getElementById('video-placeholder');
+
+        function setVideoState(active) {
+            if (active) {
+                videoElement.classList.remove('hidden');
+                videoPlaceholder.classList.add('hidden');
+            } else {
+                videoElement.classList.add('hidden');
+                videoPlaceholder.classList.remove('hidden');
+            }
+        }
+
+        function startHosting() {
+            if (peer) {
+                statusMsg.innerText = "Already active!";
+                return;
+            }
+
+            statusMsg.innerText = "Initializing Host...";
+            // Create a random ID for the host
+            const randomId = 'kabir-' + Math.floor(Math.random() * 10000);
+            
+            peer = new Peer(randomId);
+
+            peer.on('open', (id) => {
+                document.getElementById('my-id').innerText = id;
+                document.getElementById('host-controls').classList.remove('hidden');
+                document.getElementById('viewer-controls').classList.add('hidden');
+                statusMsg.innerText = "Ready to share. Click Start in browser prompt.";
+                
+                // Get Screen Stream
+                navigator.mediaDevices.getDisplayMedia({
+                    video: { cursor: "always" },
+                    audio: false
+                }).then((stream) => {
+                    localStream = stream;
+                    
+                    // Show my own stream in the preview
+                    videoElement.srcObject = stream;
+                    setVideoState(true);
+                    statusMsg.innerText = "Sharing screen. Waiting for connections...";
+
+                    // Handle stream stop (user clicks 'Stop Sharing' in browser UI)
+                    stream.getVideoTracks()[0].onended = () => {
+                        stopHosting();
+                    };
+
+                }).catch((err) => {
+                    console.error("Failed to get display media", err);
+                    statusMsg.innerText = "Screen sharing cancelled or failed.";
+                    statusMsg.classList.add("text-red-500");
+                });
+            });
+
+            // Handle incoming connections from viewers
+            peer.on('call', (call) => {
+                if(localStream) {
+                    call.answer(localStream); // Answer the call with the screen stream
+                    statusMsg.innerText = "A viewer connected!";
+                }
+            });
+
+            peer.on('error', (err) => {
+                console.error(err);
+                statusMsg.innerText = "Connection Error: " + err.type;
+            });
+        }
+
+        function stopHosting() {
+            if (localStream) {
+                localStream.getTracks().forEach(track => track.stop());
+                localStream = null;
+            }
+            if (peer) {
+                peer.destroy();
+                peer = null;
+            }
+            location.reload(); // Reload to reset UI for simplicity
+        }
+
+        function joinStream() {
+            const hostId = document.getElementById('remote-id').value.trim();
+            if (!hostId) {
+                statusMsg.innerText = "Please enter a Host ID";
+                return;
+            }
+
+            statusMsg.innerText = "Connecting to " + hostId + "...";
+            
+            // Viewer needs their own peer ID to connect
+            peer = new Peer();
+
+            peer.on('open', (id) => {
+                // Call the host
+                const call = peer.call(hostId, document.createElement('canvas').captureStream()); // Dummy stream to initiate call
+                
+                call.on('stream', (remoteStream) => {
+                    statusMsg.innerText = "Connected! Receiving stream...";
+                    videoElement.srcObject = remoteStream;
+                    setVideoState(true);
+                });
+
+                call.on('close', () => {
+                    statusMsg.innerText = "Stream ended by host.";
+                    setVideoState(false);
+                });
+                
+                // Fallback timeout
+                setTimeout(() => {
+                    if(videoElement.paused && !videoElement.srcObject) {
+                        statusMsg.innerText = "Connection timed out. Check ID or network.";
+                    }
+                }, 5000);
+            });
+
+            peer.on('error', (err) => {
+                statusMsg.innerText = "Error: " + err.type;
+            });
+        }
+
+    </script>
+</body>
+</html>
+
